@@ -1,14 +1,33 @@
 (
-// DrumKit
-("DrumKit.scd").loadRelative;
-// HenonN
-("HenonN.scd").loadRelative;
-// Looper
-("LPlay.scd").loadRelative;
-// Plays a file
-("PlayBuf.scd").loadRelative;
-// TB 303
-("SinOscFB.scd").loadRelative;
-// TB 303
-("TB303.scd").loadRelative;
+
+var instruments = [
+	"DrumKit",
+    "Granular",
+	"HenonN",
+	"Keyboards",
+	"LPlay",
+	"Organs",
+	"Pianos",
+	"Playbuf",
+	"TB303",
+];
+
+var effects = [
+	"ChorusCompressor",
+	"Delay",
+    "Flanger",
+	"HPF",
+  	"LPF",
+	"Reverb",
+	"Vibrato",
+];
+
+instruments.do{ |synth|
+	(catArgs(synth, ".scd")).loadRelative;
+};
+
+effects.do{ |synth|
+	(catArgs("../Effects/", synth, ".scd")).loadRelative;
+};
+
 )

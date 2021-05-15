@@ -24,3 +24,5 @@ SynthDef(\sinfb, {
 	Out.ar(out,Pan2.ar(sig,pan,amp));
 }).add;
 );
+
+Pdef(\o, Pbind(\instrument, \sinfb, \dur, 1, \atk, 0.5, \fb, 3, \rel, 0)).play

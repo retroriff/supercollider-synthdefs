@@ -56,3 +56,31 @@ SynthDef(\henon,{
 		Out.ar(out,Pan2.ar(sig,pan));
 }).add;
 );
+
+/* VarGui Extension from miSCellaneous_lib quark
+
+(
+
+p = Pbind(
+   \instrument, \henon,
+   \scale, Scale.minor,
+   \degree, Pseq([0,2,4,6,7].scramble, inf),
+    \octave, Pseq([8, 10], inf),
+   \dur, 0.25,
+   \a, PL(\a),
+   \b, PL(\b),
+   \atk, 0,
+   \rel, PL(\rel),
+   \sus, 0,
+   \amp, PL(\amp)
+).play;
+
+VarGui([
+    //  [ minval, maxval, warp, step, default ]
+    \a,   [0.01, 2.00, \lin, 0.01, 0.5],
+    \b,   [0.01, 2.00, \lin, 0.01, 0.5],
+    \amp, [0, 1, \lin, 0.001, 0.5],
+    \rel, [0.01, 1, \lin, 0.001, 0.5]
+], stream: p).gui;
+
+);

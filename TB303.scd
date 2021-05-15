@@ -1,24 +1,39 @@
-// Plays a file
-(
-SynthDef(\playbuf, {
-    |amp=0.5, atk=0.01, buf=0, gate=1, out=0, rel=0.05, rate=1, sus=1, pan=0, pos=0|
-    var sig, env;
-    sig = Mix.ar(PlayBuf.ar(2,buf,BufRateScale.ir(buf) * rate,1,BufDur.kr(buf)*pos*44100,doneAction:2));
-    //env = EnvGen.kr(Env.asr(atk, sus, rel), gate, doneAction: Done.freeSelf);
-	env = EnvGen.ar(Env.linen(atk, sus, rel, 1), doneAction:2);
-	sig = sig * env * amp;
-    Out.ar(out, Pan2.ar(sig, pan));
-}).add;
-);
+/*
 
-// Roland TB 303 https://sccode.org/1-4Wy
+Roland TB 303 https://sccode.org/1-4Wy
+
+Ctf:  50 - 10000
+Env:  0 - 10000
+Res:  0 - 1
+Dec:  0.3 - 2
+Wave: 0 (Saw) or 1 (Pulse)
+
+Pdef(\tb303, Pbind(
+    \instrument, \tb303,
+	\dur, Pseq([0.25], inf),
+	\freq, Pseq([ 0, 12, 0, 0, -12, 0, 0, 0, -12, 0, 12, 0, 0, 0, 0, 0 ] + 36, inf).midicps,
+	\freq, Pseq([Pseed(1003, Pwrand([1, 12, -12], [8, 1, 1].normalizeSum, 16))] + 36, inf).midicps,
+	\freq, Pseq([Pseed(Pstutter(16, Pwhite(1,1000).trace), Pwrand([1, 9, -3], [9, 3, 3].normalizeSum, 16))] + 36, inf).midicps,
+	\amp, 0.5,
+	\ctf, 100,
+	\dec, 1,
+	\env, 1000,
+	\wave, 0
+)).play.quant_(4, -1);
+
+Pdef(\303, Pbind(\instrument, \tb303, \amp, 1, \dur, 0.75, \freq, 440/4, \ctf, 1800, \env, 3000)).play.quant_(4, -1);
+
+*/
+
 (
  SynthDef (\tb303, {
-    |ctf=100, dec=1.0, env=1000, freq=440, gate=1, out=0, res=0.2, sus=0, vol=0.2, wave=0|
-	var  filEnv, volEnv, waves;
+    |amp = 0.5, ctf = 100, dec = 1.0, env = 1000, freq=440, gate=1, out=0, res=0.2, sus=0, wave=0|
+	var filEnv, sig, volEnv, waves;
 	volEnv =  EnvGen.ar( Env.new([10e-10, 1, 1, 10e-10], [0.01, sus, dec],  'exp' ), gate, doneAction: Done.freeSelf);
 	filEnv =  EnvGen.ar( Env.new([10e-10, 1, 10e-10], [0.01, dec],  'exp' ), gate, doneAction: Done.freeSelf);
 	waves = [ Saw .ar(freq, volEnv),  Pulse .ar(freq, 0.5, volEnv)];
-	Out .ar(out,  RLPF.ar( Select.ar(wave, waves), ctf + (filEnv * env), res).dup * vol);
+    sig = RLPF.ar( Select.ar(wave, waves), ctf + (filEnv * env), res).dup;
+    sig = sig * amp;
+	Out.ar(out, sig);
 }).add;
 )
