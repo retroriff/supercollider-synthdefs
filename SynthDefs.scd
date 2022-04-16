@@ -1,6 +1,7 @@
 (
 
 var instruments = [
+    "808",
 	"DrumKit",
     "Granular",
 	"HenonN",
