@@ -1096,6 +1096,7 @@ SynthDef(\choruscompresseffect, {|out =0 gate= 1|
 //By Nick Collins
 }).add;
 
+/*
 SynthDef(\reverb, {
 	arg out = 0, gate = 1, roomsize = 100, revtime = 1, damping = 0.6, inputbw = 0.5, spread = 15, drylevel = 1, earlyreflevel = 0.7, taillevel = 0.5, maxroomsize = 300, amp = 0.5;
 	var source = In.ar(out,8);
@@ -1109,7 +1110,7 @@ SynthDef(\reverb, {
 //By Zé Craum
 
 }).add;
-
+*/
 
 
 

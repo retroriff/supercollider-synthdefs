@@ -18,11 +18,11 @@ pan = panning in stereo
 SynthDef(\sinfb, {
 	arg freq = 440, atk = 0.01, sus = 0, rel = 1, fb = 0, amp = 0.3, out = 0, pan=0;
 	var sig, env;
-	env = EnvGen.ar(Env.linen(atk,sus,rel),1,1,0,1,2);
-	sig = SinOscFB.ar(freq,fb,1);
-	sig = sig*env;
-	Out.ar(out,Pan2.ar(sig,pan,amp));
+	env = EnvGen.ar(Env.linen(atk, sus, rel), 1, 1, 0, 1, 2);
+	sig = SinOscFB.ar(freq, fb);
+	sig = sig * env;
+	Out.ar(out, Pan2.ar(sig, pan, amp));
 }).add;
 );
 
-Pdef(\o, Pbind(\instrument, \sinfb, \dur, 1, \atk, 0.5, \fb, 3, \rel, 0)).play
+// Pdef(\o, Pbind(\instrument, \sinfb, \dur, 1, \atk, 0.9, \fb, 0, \rel, 0.2)).play

@@ -194,4 +194,4 @@ Pdef(\granular2, Pbind(
 
 Pdef(\loop, Pbind(\instrument, \lplay, \buf, ~s.("games", 2), \dur, 1/2, \start, 1/Pwhite(1, 8), \beats, 4, \amp, 1)).play.quant_(4);
 *)
-
+*/

@@ -7,7 +7,6 @@ http://sccode.org/1-522
 */
 
 SynthDef(\rhodes, {
-
 	// Standard arguments
 	|amp = 0.1, freq = 440, gate = 1, out = 0, pan = 0,
     // All of these range from 0 to 1
@@ -44,20 +43,21 @@ Fender Rhodes
 By Nick Collins, from Mitchell Sigman (2011) Steal this Sound
 */
 
-SynthDef(\everythingrhodes, {
 
-	|amp = 0.1, cutoff = 2000, freq = 440, gate = 1, lforate = 4.85, lfowidth = 0.5, out = 0, pan = 0, rq = 0.5|
+SynthDef(\everythingrhodes, {
+	|amp = 0.1, cutoff = 2000, freq = 440, gate = 1,
+    lforate = 4.85, lfowidth = 0.5, out = 0, pan = 0, rq = 0.5|
 
 	var pulse, filter, env;
 
-	pulse = Pulse.ar(freq*[1,33.5.midiratio],[0.2,0.1],[0.7,0.3]);
+	pulse = Pulse.ar(freq * [1, 33.5.midiratio], [0.2, 0.1], [0.7, 0.3]);
 
-	env = EnvGen.ar(Env.adsr(0.0,1.0,0.8,3.0), gate, doneAction:2);
+	env = EnvGen.ar(Env.adsr(0.0, 1.0, 0.8, 3.0), gate, doneAction: 2);
 
 	// Keyboard tracking filter cutoff
-	filter = BLowPass4.ar(pulse,(cutoff*(env.squared))+200+freq,rq);
+	filter = BLowPass4.ar(pulse, (cutoff * (env.squared)) + 200 + freq, rq);
 
-	Out.ar(out, Pan2.ar(Mix(filter)*env*amp,pan));
+	Out.ar(out, Pan2.ar(Mix(filter) * env * amp, pan));
 
 }).add;
 

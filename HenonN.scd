@@ -55,11 +55,9 @@ SynthDef(\henon,{
 		sig = sig*env;
 		Out.ar(out,Pan2.ar(sig,pan));
 }).add;
-);
+)
 
 /* VarGui Extension from miSCellaneous_lib quark
-
-(
 
 p = Pbind(
    \instrument, \henon,
@@ -84,3 +82,4 @@ VarGui([
 ], stream: p).gui;
 
 );
+*/

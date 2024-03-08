@@ -1,8 +1,9 @@
 // 1. Plays a stereo file
 (
 SynthDef(\playbuf, {
-    |amp=1, atk=0.01, buf=0, dur=1, out=0, pan=0, rel=0.05, rate=1, start=0, sus=1|
-	var beatDur, env, frames, isRewind, numChannels=2, startPos, sig;
+    |amp = 1, atk  = 0.01, buf = 0, dur = 1, out = 0, pan = 0,
+    rel = 0.05, rate = 1, start = 0, sus = 1|
+	var beatDur, env, frames, isRewind, numChannels = 2, startPos, sig;
 
     isRewind = (rate < 0);
     frames = BufFrames.kr(buf);
@@ -12,25 +13,14 @@ SynthDef(\playbuf, {
 
 	sus = (BufDur.kr(buf) * sus);
     beatDur = TempoClock.beatDur;
-    sus = Select.kr(((beatDur * dur) > sus), [beatDur * dur, sus]); // Conditional to avoid that sample length is longer than a pattern
-
-	// https://supercollider.github.io/tutorials/If-statements-in-a-SynthDef.html
-	// Conditional: Select.kr(condition > 1, false, true);
-	// numChannels = Select.kr((buf < 1), [BufChannels.ir(buf), 2]);
-	// Frames to Seconds
-	// sus = (frames / s.sampleRate) * sus;
-
-	// Old Debug: http://danielnouri.org/docs/SuperColliderHelp/Language/Debugging-tips.html
-    // o = OSCresponderNode(s.addr, '/tr', { |time, resp, msg| msg.postln }).add;
-    // SendTrig.kr(Impulse.kr(4), 0, sus);
-    // New debug: Add .poll
-    // dur.poll(label: \dur);
+    // Conditional to avoid that sample length is longer than a pattern
+    sus = Select.kr(((beatDur * dur) > sus), [beatDur * dur, sus]);
 
     // ToDo: Playbuf.ar(buf.numChannels) But buf.numChannels always returns 1
     // buf = NumChannels.ar(buf, numChannels: 2, mixdown: true);
     // BufChannels.kr(buf).poll(label: \numChannels);
 
-	numChannels = Select.kr(BufChannels.kr(buf) > 1, 2, 1); // Conditional
+	numChannels = Select.kr(BufChannels.kr(buf) > 1, 2, 1);
 
     sig = Mix.ar(PlayBuf.ar(numChannels: 2, bufnum: buf, rate: rate, trigger: 1, startPos: startPos, loop: 0, doneAction: 2));
 	env = EnvGen.ar(Env.linen(attackTime: atk, sustainTime: sus, releaseTime: rel), gate: 1, doneAction: 2);

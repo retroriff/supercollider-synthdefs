@@ -14,6 +14,7 @@ Pdef(\loopTempo, Pbind(\instrument, \lplay, \buf, ~loopTrack, \dur, ~loopDur, \a
 
 */
 
+/*
 SynthDef(\loopbuf, {
 	arg buf=0, rate=1, startpos=0, startloop=0, endloop=1, gate=1, attack=0.1, decay=0.3, sustain=1, release=1, out=0, pan=0, amp=0.5;
 	var sig, env;
@@ -21,22 +22,20 @@ SynthDef(\loopbuf, {
 	sig = LoopBuf.ar(buf.numChannels, buf, BufRateScale.kr(buf) * rate, 1, startpos, startloop, endloop);
 	env = EnvGen.ar(Env.adsr(attack, decay, sustain, release), gate, doneAction:2);
 	Out.ar(out, Pan2.ar(sig * env * amp, pan));
-}).store;
+}).store;*/
 
 // 1. Plays a stereo file
 SynthDef(\lplay,{
-	|amp=0.5, atk=0.01, beats=0, buf=0, decay=0.3, dur=4,
-    gate=1, out=0, pan=0, rel=0.05, rate=1, start=0, sus=1, tempo|
-	var env, frames, isRewind, sig, startPos, endLoop;
+	|amp = 0.5, atk = 0.01, beats = 0, buf = 0, decay = 0.3, dur = 4, gate = 1,
+    out = 0, pan = 0, rel = 0.05, rate = 1, start = 0, sus = 1, tempo|
 
-    frames = BufFrames.kr(buf);
+    var env, sig;
+    var frames = BufFrames.kr(buf);
+    var isRewind = (rate < 0);
+    var startPos = abs((frames * isRewind) - (frames * start)) - (2 * isRewind);
+    // var endLoop = Select.kr((beats > 0), [frames, frames * (dur / beats)]).clip(0, frames); // Conditional
 
-    // Rewind / Forward
-    isRewind = (rate < 0);
-    startPos = abs((frames * isRewind) - (frames * start)) - (2 * isRewind);
-    endLoop = Select.kr((beats > 0), [frames, frames * (dur / beats)]).clip(0, frames); // Conditional
-
-    // Update rate to TempoClock or tempo argument
+    // Rate & tempo
 	beats = Select.kr((beats > 0), [dur, beats]); // Conditional
     tempo = Select.kr((tempo > 0), [TempoClock.default.tempo, tempo]); // Conditional
     rate = ((BufFrames.ir(buf) / s.sampleRate) * tempo / beats);
@@ -46,13 +45,13 @@ SynthDef(\lplay,{
 	dur = Select.kr((dur < beats), [1, dur/beats]); // Conditional ? false : true
     sus = (BufDur.kr(buf) * dur / rate.abs) * sus;
 
-    // startPos.poll(label: \startPos);
-    // sig.poll(label: \endLoop);
+    // Debug
+    // rate.poll(label: \rate);
+    // dur.poll(label: \dur);
+    // sus.poll(label: \sus);
 
-    // sig = LoopBuf.ar(numChannels: buf.numChannels, bufnum: buf, rate: rate, startPos: 0, startLoop: frames/4, endLoop: endLoop, interpolation: 2);
-    sig = Mix.ar(PlayBuf.ar(numChannels: 2, bufnum: buf, rate: rate, trigger: 1, startPos: startPos, loop: 0, doneAction: 2));
-    env = EnvGen.ar(Env.linen(attackTime: 0, sustainTime: sus, releaseTime: 0), gate: gate, doneAction: 2);
-    // env = EnvGen.ar(Env.adsr(atk, decay, sus, rel), gate: gate, doneAction: 2);
+    sig = Mix.ar(PlayBuf.ar(2, buf, rate, 1, startPos, 0, doneAction: 2));
+    env = EnvGen.ar(Env.linen(atk, sus, rel), gate, doneAction: 2);
     Out.ar(out, Pan2.ar(sig * env * amp, pan));
 }).add;
 
