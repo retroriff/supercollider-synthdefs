@@ -5,21 +5,20 @@
 (
 // Bass Drum
 SynthDef.new(\bd, {
-	arg decay = 30, amp = 1, gate = 0, out = 0, pan = 0, tone = 56;
+	arg decay = 16, amp = 1, gate = 0, out = 0, pan = 0, tone = 56;
 	var fenv, env, trienv, sig, sub, punch, pfenv;
     // Xavi: Solution 1 to avoid multiples nodes
     // env = env * Env([1,1,0],[0.5,0.1]).kr(doneAction:2);
     // Xavi: Solution 2 to avoid multiples nodes
-	env = EnvGen.kr(Env.new([0.11, 1, 0], [0, decay], -225),doneAction:2);
+	env = EnvGen.kr(Env.new([0.11, 1, 0], [0, decay], -225), doneAction: 2);
 	trienv = EnvGen.kr(Env.new([0.11, 0.6, 0], [0, decay], -230), doneAction: 0);
-	fenv = Env([tone*7, tone * 1.35, tone], [0.05, 0.6], -14).kr;
-	pfenv = Env([tone*7, tone * 1.35, tone], [0.03, 0.6], -10).kr;
+	fenv = Env([tone * 7, tone * 1.35, tone], [0.05, 0.6], -14).kr;
+	pfenv = Env([tone * 7, tone * 1.35, tone], [0.03, 0.6], -10).kr;
 	sig = SinOsc.ar(fenv, pi / 2) * env;
 	sub = LFTri.ar(fenv, pi / 2) * trienv * 0.05;
 	punch = SinOsc.ar(pfenv, pi / 2) * env * 2;
 	punch = HPF.ar(punch, 350);
 	sig = (sig + sub + punch) * 1.2 ;
-    // sig = Limiter.ar(sig, 0.5) * amp * 4;
 	sig = Pan2.ar(sig, pan) * amp;
 	Out.ar(out, sig);
 }).add;
@@ -28,8 +27,8 @@ SynthDef.new(\bd, {
 SynthDef.new(\sn, {
 	arg amp = 1, tone = 340, tone2 = 189, snappy = 0.3, amp2 = 1, out = 0, pan=0;
 	var noiseEnv, atkEnv, sig, noise, osc1, osc2, sum;
-	noiseEnv = EnvGen.kr(Env.perc(0.001, 4.2, 1, -115), doneAction:2);
-	atkEnv = EnvGen.kr(Env.perc(0.001, 0.8,curve:-95), doneAction:0);
+	noiseEnv = EnvGen.kr(Env.perc(0.001, 4.2, 1, -115), doneAction: 2);
+	atkEnv = EnvGen.kr(Env.perc(0.001, 0.8, curve: -95), doneAction: 0);
     atkEnv = atkEnv * Env([1, 1, 0], [0.5, 0.1]).kr(doneAction: 2);
 	noise = WhiteNoise.ar;
 	noise = HPF.ar(noise, 1800);

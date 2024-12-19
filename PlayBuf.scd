@@ -1,30 +1,50 @@
 // 1. Plays a stereo file
 (
 SynthDef(\playbuf, {
-    |amp = 1, atk  = 0.01, buf = 0, dur = 1, out = 0, pan = 0,
+    |amp = 1, atk  = 0, buf = 0, dur = 1, out = 0, pan = 0,
     rel = 0.05, rate = 1, start = 0, sus = 1|
+
 	var beatDur, env, frames, isRewind, numChannels = 2, startPos, sig;
 
     isRewind = (rate < 0);
     frames = BufFrames.kr(buf);
-    startPos = abs( (frames * isRewind) - (frames * start) ) - (2 * isRewind);
+    startPos = abs((frames * isRewind) - (frames * start)) - (2 * isRewind);
 
     rate = BufRateScale.ir(buf) * rate;
 
 	sus = (BufDur.kr(buf) * sus);
     beatDur = TempoClock.beatDur;
-    // Conditional to avoid that sample length is longer than a pattern
+
+    // Conditional to prevent that sample length is longer than a pattern
     sus = Select.kr(((beatDur * dur) > sus), [beatDur * dur, sus]);
 
-    // ToDo: Playbuf.ar(buf.numChannels) But buf.numChannels always returns 1
+    // TODO: Playbuf.ar(buf.numChannels) But buf.numChannels always returns 1
     // buf = NumChannels.ar(buf, numChannels: 2, mixdown: true);
     // BufChannels.kr(buf).poll(label: \numChannels);
+	// numChannels = Select.kr(BufChannels.kr(buf) > 1, 2, 1);
 
-	numChannels = Select.kr(BufChannels.kr(buf) > 1, 2, 1);
+    sig = Mix.ar(PlayBuf.ar(
+        numChannels: 2,
+        bufnum: buf,
+        rate: rate,
+        trigger: 1,
+        startPos: startPos,
+        loop: 0,
+        doneAction: 2
+    ));
 
-    sig = Mix.ar(PlayBuf.ar(numChannels: 2, bufnum: buf, rate: rate, trigger: 1, startPos: startPos, loop: 0, doneAction: 2));
-	env = EnvGen.ar(Env.linen(attackTime: atk, sustainTime: sus, releaseTime: rel), gate: 1, doneAction: 2);
+	env = EnvGen.ar(
+        Env.linen(
+            attackTime: atk,
+            sustainTime: sus,
+            releaseTime: rel
+        ),
+        gate: 1,
+        doneAction: 2
+    );
+
 	sig = sig * env * amp;
+    // sig = Splay.ar(sig, spread: pan.abs, center: pan);
     sig = Pan2.ar(sig, pan);
     Out.ar(out, sig);
 }).add;

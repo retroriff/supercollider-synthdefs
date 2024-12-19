@@ -66,34 +66,46 @@ SynthDef(\granular2, { |amp, buf|
 * @url: https://github.com/elifieldsteel/SuperCollider-Tutorials/blob/master/full%20video%20scripts/25_script.scd
 */
 SynthDef.new(\gs, {
-    |sync=1, dens=20, baseDur=0.1, durRand=1, buf=0, rate=1,
-    pos=0, posSpeed=1, posRand=0, grainEnv=(-1), pan=0, panHz=0.1, panRand=0,
-    atk=1, sus=2, rel=1, c0=1, c1=(-1), amp=1, out=0|
+    |sync = 1, dens = 20, baseDur = 0.1, durRand = 1, buf = 0, rate = 1,
+    pos = 0, posSpeed = 1, posRand=0, grainEnv=(-1), pan=0, panHz=0.1, panRand=0,
+    atk = 1, sus = 2, rel = 1, c0 = 1, c1 = (-1), amp = 1, out = 0|
 
     var sig, env, densCtrl, durCtrl, posCtrl, panCtrl;
-    env = EnvGen.ar(Env.new([0,1,1,0], [atk,sus,rel], [c0,0,c1]), doneAction:2);
+
+    env = EnvGen.ar(
+        evelope: Env.new(
+            levels: [0,1,1,0],
+            times: [atk, sus, rel],
+            curve: [c0, 0, c1]
+        ),
+        doneAction: 2,
+    );
 
     densCtrl = Select.ar(sync, [Dust.ar(dens), Impulse.ar(dens)]);
 
-    durCtrl = baseDur * LFNoise1.kr(100).exprange(1/durRand,durRand);
+    durCtrl = baseDur * LFNoise1.kr(100).exprange(1 / durRand, durRand);
 
-    posCtrl = Phasor.ar(0, posSpeed * BufRateScale.ir(buf), 0, BufSamples.ir(buf));
+    posCtrl = Phasor.ar(
+        trig: 0,
+        rate: posSpeed * BufRateScale.ir(buf),
+        start: 0,
+        end: BufSamples.ir(buf)
+    );
     posCtrl = posCtrl + LFNoise1.kr(100).bipolar(posRand*SampleRate.ir);
     posCtrl = posCtrl / BufSamples.ir(buf);
     posCtrl = posCtrl + pos;
-
     panCtrl = pan + LFNoise1.kr(panHz).bipolar(panRand);
 
     sig = GrainBuf.ar(
-        2,
-        densCtrl,
-        durCtrl,
-        buf,
-        rate,
-        posCtrl,
-        2,
-        panCtrl,
-        grainEnv
+        numChannels: 2,
+        trigger: densCtrl,
+        dur: durCtrl,
+        sndbuf: buf,
+        rate: rate,
+        pos: posCtrl,
+        interp: 2,
+        pan: panCtrl,
+        envbufnum: grainEnv
     );
 
     sig = sig * env * amp;

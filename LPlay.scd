@@ -1,58 +1,49 @@
-(
-
 /*
-If rate argument is not received, it calculates the rate but the tempo can't be changed.
-The Synthdef needs to be reevaluated to get the new tempo.
-In order to get the right tempo, we must calculate the rate previously and pass it to the Synthdef:
-
-(
-~loopTrack = ~s.("break8", 5);
-~loopDur = 8;
-~loopRate = Pfunc { ((~loopTrack.numFrames / s.sampleRate) * (~bpm/60) / ~loopDur) };
-Pdef(\loopTempo, Pbind(\instrument, \lplay, \buf, ~loopTrack, \dur, ~loopDur, \amp, 0.2, \rate, ~loopRate)).play.quant_(4, -1);
-)
-
+It needs to be reevaluated to get the new tempo.
 */
 
-/*
-SynthDef(\loopbuf, {
-	arg buf=0, rate=1, startpos=0, startloop=0, endloop=1, gate=1, attack=0.1, decay=0.3, sustain=1, release=1, out=0, pan=0, amp=0.5;
-	var sig, env;
-	endloop = BufFrames.kr(buf) * endloop;
-	sig = LoopBuf.ar(buf.numChannels, buf, BufRateScale.kr(buf) * rate, 1, startpos, startloop, endloop);
-	env = EnvGen.ar(Env.adsr(attack, decay, sustain, release), gate, doneAction:2);
-	Out.ar(out, Pan2.ar(sig * env * amp, pan));
-}).store;*/
-
+(
 // 1. Plays a stereo file
 SynthDef(\lplay,{
-	|amp = 0.5, atk = 0.01, beats = 0, buf = 0, decay = 0.3, dur = 4, gate = 1,
+	|amp = 1, atk = 0.01, beats = 0, buf = 0, decay = 0.3, dur = 4, gate = 1,
     out = 0, pan = 0, rel = 0.05, rate = 1, start = 0, sus = 1, tempo|
 
     var env, sig;
     var frames = BufFrames.kr(buf);
     var isRewind = (rate < 0);
     var startPos = abs((frames * isRewind) - (frames * start)) - (2 * isRewind);
-    // var endLoop = Select.kr((beats > 0), [frames, frames * (dur / beats)]).clip(0, frames); // Conditional
 
     // Rate & tempo
-	beats = Select.kr((beats > 0), [dur, beats]); // Conditional
-    tempo = Select.kr((tempo > 0), [TempoClock.default.tempo, tempo]); // Conditional
+	beats = Select.kr(beats, [dur, beats]);
+    tempo = Select.kr(tempo, [TempoClock.default.tempo, tempo]);
     rate = ((BufFrames.ir(buf) / s.sampleRate) * tempo / beats);
-    rate = Select.kr((isRewind < 1), [rate.neg, rate]); // Conditional
+    rate = Select.kr(isRewind, [rate, rate.neg]);
 
     // Sustain
-	dur = Select.kr((dur < beats), [1, dur/beats]); // Conditional ? false : true
+	dur = Select.kr((dur < beats), [1, dur / beats]);
     sus = (BufDur.kr(buf) * dur / rate.abs) * sus;
 
-    // Debug
-    // rate.poll(label: \rate);
-    // dur.poll(label: \dur);
-    // sus.poll(label: \sus);
+    env = EnvGen.ar(
+        Env.linen(atk, sus, rel),
+        gate,
+        doneAction: 2
+    );
 
-    sig = Mix.ar(PlayBuf.ar(2, buf, rate, 1, startPos, 0, doneAction: 2));
-    env = EnvGen.ar(Env.linen(atk, sus, rel), gate, doneAction: 2);
-    Out.ar(out, Pan2.ar(sig * env * amp, pan));
+    sig = Mix.ar(
+        PlayBuf.ar(
+            numChannels: 2,
+            bufnum: buf,
+            rate: rate,
+            startPos: startPos,
+            loop: 0,
+            doneAction: 2
+        );
+    );
+
+    sig = (sig * env) * amp;
+    sig = Pan2.ar(sig, pan);
+
+    Out.ar(out, sig);
 }).add;
 
 
@@ -85,67 +76,4 @@ SynthDef(\lplaym,{
     sig = Pan2.ar(sig, pan);
     Out.ar(out, sig);
 }).add;
-
 )
-
-/*
-Example 1: Tempo doesn't need to be passed when the track will be played in a single tempo all the time
-Pdef(\loop, Pbind(\instrument, \lplay, \buf, ~s.("break4", 2), \dur, 4, \amp, 0.5)).play.quant_(4);
-Example 2: Tempo must be passed when the track will have different tempos
-Pdef(\loopTempo, Pbind(\instrument, \lplay, \buf, ~loopTrack, \dur, ~loopDur, \amp, 0.5, \rate, -1, \tempo, Pfunc({~bpm/60}))).play.quant_(4);
-*/
-
-/*
-Old Snippet: Calculate the rate outside of SynthDef 17/07/2020
-~loopTrack = ~s.("break4", 2);
-~loopDur = 4;
-~loopRate = Pfunc { ((~loopTrack.numFrames / s.sampleRate) * (~bpm/60) / ~loopDur) };
-~loopTempo = ~bpm/60;
-*/
-
-/* Backup: 17/02/2020
-SynthDef(\lplay,{
-	|amp=0.5, buf=0, dur=4, out=0, pan=0, rate, rel=15|1
-	var env, frames, isRewind, missingRate, sig, startPos;
-
-    frames = BufFrames.kr(buf);
-    isRewind = (rate < 0);
-    startPos = abs( (frames * isRewind) - (frames * 0) ) - (2 * isRewind);
-
-    missingRate = ((BufFrames.ir(buf) / s.sampleRate) * TempoClock.default.tempo / dur);
-    rate = Select.kr((rate > 0) + (rate < 0), [missingRate, rate]);
-
-	sig = Mix.ar(PlayBuf.ar(2, buf, rate, 1, 0, startPos:startPos, doneAction:2));
-	env = EnvGen.ar(Env.linen(0.0, rel, 0), doneAction:2);
-	sig = sig * env * amp;
-	Out.ar(out, Pan2.ar(sig, pan));
-}).add;
-
-*/
-
-
-/*
-This one needs the rate argument, which is calculated by Pfunc.
-Pfunc { ((d["break4"][0].numFrames / s.sampleRate) * (~bpm/60) / 4); }
-
-(
-~loop = Pdef(\loop, Pbind(\instrument, \lplayTempo, \buf, d["break4"][0], \dur, 4, \amp, 0.1,
-	\rate, Pfunc { ((d["break4"][0].numFrames / s.sampleRate) * (~bpm/60) / 4); }.trace
-)).play.quant_(4, -1);
-)
-
-SynthDef(\lplayTempo,{
-    |amp=0.5, buf=0, dur=4, out=0, pan=0, rate=1, rel=15|
-	var env, frames, isForward, sig, startPos;
-
-    frames = BufFrames.kr(buf);
-    isForward = (rate < 0);
-    startPos = abs( (frames * isForward) - (frames * 0) ) - (2 * isForward);
-
-	sig = Mix.ar(PlayBuf.ar(2, buf, BufRateScale.kr(buf)*rate, 1, 0, startPos:startPos, doneAction:2));
-	env = EnvGen.ar(Env.linen(0.0, rel, 0), doneAction:2);
-	sig = sig * env * amp;
-	Out.ar(out, Pan2.ar(sig, pan));
-}).add;
-
-*/
