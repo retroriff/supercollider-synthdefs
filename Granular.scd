@@ -66,51 +66,49 @@ SynthDef(\granular2, { |amp, buf|
 * @url: https://github.com/elifieldsteel/SuperCollider-Tutorials/blob/master/full%20video%20scripts/25_script.scd
 */
 SynthDef.new(\gs, {
-    |sync = 1, dens = 20, baseDur = 0.1, durRand = 1, buf = 0, rate = 1,
-    pos = 0, posSpeed = 1, posRand=0, grainEnv=(-1), pan=0, panHz=0.1, panRand=0,
-    atk = 1, sus = 2, rel = 1, c0 = 1, c1 = (-1), amp = 1, out = 0|
+    |buf = 0, dens = 20, durRand = 1, sync = 1|
 
     var sig, env, densCtrl, durCtrl, posCtrl, panCtrl;
 
     env = EnvGen.ar(
-        evelope: Env.new(
-            levels: [0,1,1,0],
-            times: [atk, sus, rel],
-            curve: [c0, 0, c1]
+        envelope: Env.new(
+            levels: [0, 1, 1, 0],
+            times: [\atk.kr(1), \sus.kr(2), \rel.kr(1)],
+            curve: [\curve0.kr(1), 0, \curve1.kr(-1)]
         ),
         doneAction: 2,
     );
 
     densCtrl = Select.ar(sync, [Dust.ar(dens), Impulse.ar(dens)]);
 
-    durCtrl = baseDur * LFNoise1.kr(100).exprange(1 / durRand, durRand);
+    durCtrl = \baseDur.kr(0.1) * LFNoise1.kr(100).exprange(1 / durRand, durRand);
 
     posCtrl = Phasor.ar(
         trig: 0,
-        rate: posSpeed * BufRateScale.ir(buf),
+        rate: \posSpeed.kr(1) * BufRateScale.ir(buf),
         start: 0,
         end: BufSamples.ir(buf)
     );
-    posCtrl = posCtrl + LFNoise1.kr(100).bipolar(posRand*SampleRate.ir);
+    posCtrl = posCtrl + LFNoise1.kr(100).bipolar(\posRand.kr(0) * SampleRate.ir);
     posCtrl = posCtrl / BufSamples.ir(buf);
-    posCtrl = posCtrl + pos;
-    panCtrl = pan + LFNoise1.kr(panHz).bipolar(panRand);
+    posCtrl = posCtrl + \pos.kr(0);
+    panCtrl = \pan.kr(0) + LFNoise1.kr(\panHz.kr(0.1)).bipolar(\panRand.kr(0));
 
     sig = GrainBuf.ar(
         numChannels: 2,
         trigger: densCtrl,
         dur: durCtrl,
         sndbuf: buf,
-        rate: rate,
+        rate: \rate.kr(1),
         pos: posCtrl,
         interp: 2,
         pan: panCtrl,
-        envbufnum: grainEnv
+        envbufnum: \grainEnv.kr(-1),
     );
 
-    sig = sig * env * amp;
+    sig = sig * env * \amp.kr(1);
 
-    Out.ar(out, sig);
+    Out.ar(\out.kr(0), sig);
 }).add;
 )
 
